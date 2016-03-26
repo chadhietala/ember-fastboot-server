@@ -51,4 +51,39 @@ describe("bin/ember-fastboot", function() {
         server.stop();
       });
   });
+
+  it('discovers the the API responses', function() {
+    this.timeout(3000);
+
+    var api = require('express')();
+
+    api.get('/api/posts', function(req, res) {
+      res.json({data: [{
+        id: 1,
+        type: 'posts',
+        attributes: {
+          title: 'Hello World'
+        }
+      }]});
+    });
+
+    api.listen(1234, function() {
+      console.log('Starting test API server on port 1234');
+    });
+
+    var server = new Server('data-discovery', {
+      args: ['--resource-discovery']
+    });
+
+    return expect(server.start()).to.be.fulfilled
+      .then(function() {
+        return request('http://localhost:3000');
+      })
+      .then(function(html) {
+        expect(html).to.match(/resource-discovery-response/);
+      })
+      .finally(function() {
+        server.stop();
+      });
+  });
 });
